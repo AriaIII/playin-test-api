@@ -34,4 +34,15 @@ class DepositEntryRepository extends ServiceEntityRepository
             $this->_em->flush();
         }
     }
+
+    public function getOlderDepositEntry(int $productId)
+    {
+        $query = $this->createQueryBuilder('d')
+            ->where('d.product = :productId')
+            ->setParameter('productId', $productId)
+            ->orderBy('d.id', 'ASC')
+            ->getQuery()
+            ;
+        return $query->getResult();
+    }
 }
