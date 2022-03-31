@@ -35,7 +35,7 @@ class DepositEntryRepository extends ServiceEntityRepository
         }
     }
 
-    public function getOlderDepositEntry(int $productId)
+    public function getDepositEntries(int $productId)
     {
         $query = $this->createQueryBuilder('d')
             ->where('d.product = :productId')

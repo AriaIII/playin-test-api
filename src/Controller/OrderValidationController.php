@@ -21,9 +21,13 @@ class OrderValidationController extends AbstractController
         OrderEntryRepository $orderEntryRepository,
         DepositEntryRepository $depositEntryRepository,
         AssociationManager $associationManager,
-        DepositEntryManager $depositEntryManager
+        DepositEntryManager $depositEntryManager,
+        StockEntryRepository $stockEntryRepository,
     ) {
 //        dump(json_decode($request->getContent(), true)); die();
+        if (json_decode($request->getContent() === true)) {
+
+        }
         $order = $orderRepository->find($id);
         $orderEntries = $orderEntryRepository->findBy(['order' => $id]);
         foreach ($orderEntries as $orderEntry) {
@@ -31,24 +35,22 @@ class OrderValidationController extends AbstractController
             $productId = $orderEntry->getProduct()->getId();
             $orderQuantity = $orderEntry->getQuantity();
             $sellPrice = $orderEntry->getSellPrice();
-            $depositEntries = $depositEntryRepository->getOlderDepositEntry($productId);
+            $depositEntries = $depositEntryRepository->getDepositEntries($productId);
             if (!empty($depositEntries)) {
-                /* ce qu'il faudrait probablement faire :
+                /* ce qu'il faut faire :
                 récupérer la quantité
                 -> si elle est suffisante pour couvrir la commande :
                     la mettre à jour ou supprimer l'entrée si il n'y a plus de produit
                 -> si elle n'est pas suffisante :
                     supprimer l'entrée,
                     récupérer le dépôt suivant et refaire la même chose
-                        si plus de dépot : aller chercher le stock
-                Vu la demande de l'exercice, je pense qu'on va au plus simple, on prend le premier dépot
-
+                    si plus de dépot : aller chercher le stock
                  */
                 foreach ($depositEntries as $depositEntry) {
                     $soldQuantity = $depositEntry->getSoldQuantity();
                     $availableQuantity = $depositEntry->getQuantity() - $soldQuantity;
                     $percentage = $depositEntry->getReimbursementPercentage();
-                    if ($availableQuantity > $orderQuantity) {
+                    if ($availableQuantity >= $orderQuantity) {
                         $margin = $associationManager->depositMarginCaculate($percentage, $sellPrice, $orderQuantity);
                         $associationManager->create($margin, $orderEntryId, Association::DEPOSIT, $depositEntry->getDeposit->getId());
                         $soldQuantity += $orderQuantity;
@@ -67,9 +69,11 @@ class OrderValidationController extends AbstractController
                     $associationManager->create($margin, $orderEntryId, Association::DEPOSIT, $depositEntry->getDeposit->getId());
                     $orderQuantity -= $availableQuantity;
                 }
-
             }
-        } die();
+            $stockEntries = $stockEntryRepository->getStockEntries($productId);
+
+
+        } 
     }
 
 }

@@ -34,4 +34,15 @@ class StockEntryRepository extends ServiceEntityRepository
             $this->_em->flush();
         }
     }
+
+    public function getStockEntries(int $productId)
+    {
+        $query = $this->createQueryBuilder('s')
+            ->where('s.product = :productId')
+            ->setParameter('productId', $productId)
+            ->orderBy('s.id', 'ASC')
+            ->getQuery()
+            ;
+        return $query->getResult();
+    }
 }
